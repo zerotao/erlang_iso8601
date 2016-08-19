@@ -1,2 +1,5 @@
 .eunit
 ebin
+doc
+_build
+logs
