@@ -13,12 +13,12 @@
          is_duration/1,
          is_datetime/1]).
 
--compile({no_auto_import,[now/0]}).
+-compile({no_auto_import, [now/0]}).
 
 -export_types([datetime/0,
                timestamp/0]).
 
--define(MIDNIGHT, {0,0,0}).
+-define(MIDNIGHT, {0, 0, 0}).
 -define(V, proplists:get_value).
 
 -type datetime() :: {Date::calendar:date(),
@@ -36,45 +36,46 @@
 now() ->
     format(os:timestamp()).
 
--spec add_time (datetime() | timestamp(), integer(), integer(), integer()) -> datetime().
+-spec add_time (datetime() | timestamp(), integer(), integer(), integer()) ->
+  datetime().
 %% @doc Add some time to the supplied `datetime()'.
-add_time({_,_,_}=Timestamp, H, M, S) ->
-    add_time(calendar:now_to_datetime(Timestamp),H,M,S);
+add_time({_, _, _}=Timestamp, H, M, S) ->
+    add_time(calendar:now_to_datetime(Timestamp), H, M, S);
 add_time(Datetime, H, M, S) ->
     apply_offset(Datetime, H, M, S).
 
 -spec add_days (datetime() | timestamp(), integer()) -> datetime().
 %% @doc Add some days to the supplied `datetime()'.
-add_days({_,_,_}=Timestamp, D) ->
-        add_days(calendar:now_to_datetime(Timestamp),D);
+add_days({_, _, _}=Timestamp, D) ->
+        add_days(calendar:now_to_datetime(Timestamp), D);
 add_days(Datetime,  D) ->
-    apply_days_offset(Datetime,D).
+    apply_days_offset(Datetime, D).
 
 -spec add_months (datetime() | timestamp(), integer()) -> datetime().
 %% @doc Add some months to the supplied `datetime()'.
-add_months({_,_,_}=Timestamp, M) ->
-        add_months(calendar:now_to_datetime(Timestamp),M);
+add_months({_, _, _}=Timestamp, M) ->
+        add_months(calendar:now_to_datetime(Timestamp), M);
 add_months(Datetime,  M) ->
-    apply_months_offset(Datetime,M).
+    apply_months_offset(Datetime, M).
 
 -spec add_years (datetime() | timestamp(), integer()) -> datetime().
 %% @doc Add some years to the supplied `datetime()'.
-add_years({_,_,_}=Timestamp, Y) ->
-        add_years(calendar:now_to_datetime(Timestamp),Y);
+add_years({_, _, _}=Timestamp, Y) ->
+        add_years(calendar:now_to_datetime(Timestamp), Y);
 add_years(Datetime,  Y) ->
-    apply_years_offset(Datetime,Y).
+    apply_years_offset(Datetime, Y).
 
 -spec format (datetime() | timestamp()) -> binary().
 %% @doc Convert a `util:timestamp()' or a calendar-style `{date(), time()}'
 %% tuple to an ISO 8601 formatted string. Note that this function always
 %% returns a string with no offset (i.e., ending in "Z").
-format({_,_,_}=Timestamp) ->
+format({_, _, _}=Timestamp) ->
     format(calendar:now_to_datetime(Timestamp));
-format({{Y,Mo,D}, {H,Mn,S}}) when is_float(S) ->
+format({{Y, Mo, D}, {H, Mn, S}}) when is_float(S) ->
     FmtStr = "~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~9.6.0fZ",
     IsoStr = io_lib:format(FmtStr, [Y, Mo, D, H, Mn, S]),
     list_to_binary(IsoStr);
-format({{Y,Mo,D}, {H,Mn,S}}) ->
+format({{Y, Mo, D}, {H, Mn, S}}) ->
     FmtStr = "~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0BZ",
     IsoStr = io_lib:format(FmtStr, [Y, Mo, D, H, Mn, S]),
     list_to_binary(IsoStr).
@@ -89,7 +90,7 @@ parse(Str) ->
 -spec gi(string()) ->integer().
 %doc get string and return integer part or 0 on error
 gi(DS)->
-   {Int,_Rest} = string:to_integer(DS),
+   {Int, _Rest} = string:to_integer(DS),
     case Int of
     error->0;
     _->Int
@@ -100,80 +101,80 @@ gi(DS)->
 parse_duration(Bin) when is_binary(Bin)-> %TODO extended format
     parse_duration(binary_to_list(Bin));
 parse_duration(Str) ->
-    case re:run(Str,"^(?<sign>-|\\+)?P"
+    case re:run(Str, "^(?<sign>-|\\+)?P"
     "(?:(?<years>[0-9]+)Y)?"
     "(?:(?<months>[0-9]+)M)?"
     "(?:(?<days>[0-9]+)D)?"
     "(T(?:(?<hours>[0-9]+)H)?"
     "(?:(?<minutes>[0-9]+)M)?"
     "(?:(?<seconds>[0-9]+(?:\\.[0-9]+)?)S)?)?$",
-    [{capture,[sign,years,months,days,hours,minutes,seconds],list}]) of
-    {match,[Sign,Years,Months,Days,Hours,Minutes,Seconds]} ->
-    [{sign,Sign},{years,gi(Years)},{months,gi(Months)},
-     {days,gi(Days)},{hours,gi(Hours)},{minutes,gi(Minutes)},
-     {seconds,gi(Seconds)}];
+    [{capture, [sign, years, months, days, hours, minutes, seconds], list}]) of
+    {match, [Sign, Years, Months, Days, Hours, Minutes, Seconds]} ->
+    [{sign, Sign}, {years, gi(Years)}, {months, gi(Months)},
+     {days, gi(Days)}, {hours, gi(Hours)}, {minutes, gi(Minutes)},
+     {seconds, gi(Seconds)}];
     nomatch -> error(badarg)
     end.
 
 %% Private functions
 
-year([Y1,Y2,Y3,Y4|Rest], Acc) ->
-    acc([Y1,Y2,Y3,Y4], Rest, year, Acc, fun month_or_week/2);
+year([Y1, Y2, Y3, Y4 | Rest], Acc) ->
+    acc([Y1, Y2, Y3, Y4], Rest, year, Acc, fun month_or_week/2);
 year(_, _) ->
     error(badarg).
 
 month_or_week([], Acc) ->
     datetime(Acc);
-month_or_week([$-,$W,W1,W2|Rest], Acc) ->
-    acc([W1,W2], Rest, week, Acc, fun week_day/2);
-month_or_week([$-,M1,M2|Rest], Acc) ->
-    acc([M1,M2], Rest, month, Acc, fun month_day/2);
-month_or_week([$W,W1,W2|Rest], Acc) ->
-    acc([W1,W2], Rest, week, Acc, fun week_day_no_hyphen/2);
-month_or_week([M1,M2|Rest], Acc) ->
-    acc([M1,M2], Rest, month, Acc, fun month_day_no_hyphen/2);
+month_or_week([$-, $W, W1, W2 | Rest], Acc) ->
+    acc([W1, W2], Rest, week, Acc, fun week_day/2);
+month_or_week([$-, M1, M2 | Rest], Acc) ->
+    acc([M1, M2], Rest, month, Acc, fun month_day/2);
+month_or_week([$W, W1, W2 | Rest], Acc) ->
+    acc([W1, W2], Rest, week, Acc, fun week_day_no_hyphen/2);
+month_or_week([M1, M2 | Rest], Acc) ->
+    acc([M1, M2], Rest, month, Acc, fun month_day_no_hyphen/2);
 month_or_week(_, _) ->
     error(badarg).
 
 week_day([], Acc) ->
     datetime(Acc);
-week_day([$-,D|Rest], Acc) ->
+week_day([$-, D|Rest], Acc) ->
     acc([D], Rest, week_day, Acc, fun hour/2);
 week_day(_, _) ->
     error(badarg).
 
 week_day_no_hyphen([], Acc) ->
     datetime(Acc);
-week_day_no_hyphen([D|Rest], Acc) ->
+week_day_no_hyphen([D | Rest], Acc) ->
     acc([D], Rest, week_day, Acc, fun hour/2);
 week_day_no_hyphen(_, _) ->
     error(badarg).
 
 month_day([], Acc) ->
     datetime(Acc);
-month_day([$-,D1,D2|Rest], Acc) ->
-    acc([D1,D2], Rest, month_day, Acc, fun hour/2);
+month_day([$-, D1, D2 | Rest], Acc) ->
+    acc([D1, D2], Rest, month_day, Acc, fun hour/2);
 month_day(_, _) ->
     error(badarg).
 
 month_day_no_hyphen([], _) ->
     error(badarg); % omission of day disallowed by spec in this case
-month_day_no_hyphen([D1,D2|Rest], Acc) ->
-    acc([D1,D2], Rest, month_day, Acc, fun hour/2);
+month_day_no_hyphen([D1, D2 | Rest], Acc) ->
+    acc([D1, D2], Rest, month_day, Acc, fun hour/2);
 month_day_no_hyphen(_, _) ->
     error(badarg).
 
 hour([], Acc) ->
     datetime(Acc);
-hour([$T,H1,H2,$.|Rest], Acc) ->
-    check_hour( list_to_integer([H1,H2])
-              , acc([H1,H2], Rest, hour, Acc, fun hour_decimal/2) );
-hour([$T,H1,H2,$,|Rest], Acc) ->
-    check_hour( list_to_integer([H1,H2])
-              , acc([H1,H2], Rest, hour, Acc, fun hour_decimal/2));
-hour([$T,H1,H2|Rest], Acc) ->
-    check_hour( list_to_integer([H1,H2])
-              , acc([H1,H2], Rest, hour, Acc, fun minute/2));
+hour([$T, H1, H2, $. | Rest], Acc) ->
+    check_hour( list_to_integer([H1, H2])
+              , acc([H1, H2], Rest, hour, Acc, fun hour_decimal/2));
+hour([$T, H1, H2, $, | Rest], Acc) ->
+    check_hour( list_to_integer([H1, H2])
+              , acc([H1, H2], Rest, hour, Acc, fun hour_decimal/2));
+hour([$T, H1, H2 | Rest], Acc) ->
+    check_hour( list_to_integer([H1, H2])
+              , acc([H1, H2], Rest, hour, Acc, fun minute/2));
 hour(_, _) ->
     error(badarg).
 
@@ -187,18 +188,18 @@ hour_decimal(Str, Acc) ->
 
 minute([], Acc) ->
     datetime(Acc);
-minute([$:,M1,M2,$.|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun minute_decimal/2);
-minute([$:,M1,M2,$,|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun minute_decimal/2);
-minute([$:,M1,M2|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun second/2);
-minute([M1,M2,$.|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun minute_decimal/2);
-minute([M1,M2,$,|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun minute_decimal/2);
-minute([M1,M2|Rest], Acc) ->
-    acc([M1,M2], Rest, minute, Acc, fun second_no_colon/2);
+minute([$:, M1, M2, $. | Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun minute_decimal/2);
+minute([$:, M1, M2, $, | Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun minute_decimal/2);
+minute([$:, M1, M2| Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun second/2);
+minute([M1, M2, $. | Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun minute_decimal/2);
+minute([M1, M2, $, | Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun minute_decimal/2);
+minute([M1, M2 | Rest], Acc) ->
+    acc([M1, M2], Rest, minute, Acc, fun second_no_colon/2);
 minute(_, _) ->
     error(badarg).
 
@@ -207,23 +208,23 @@ minute_decimal(Str, Acc) ->
 
 second([], Acc) ->
     datetime(Acc);
-second([$:,S1,S2,$.|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun second_decimal/2);
-second([$:,S1,S2,$,|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun second_decimal/2);
-second([$:,S1,S2|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun offset_hour/2);
+second([$:, S1, S2, $.| Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun second_decimal/2);
+second([$:, S1, S2, $, | Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun second_decimal/2);
+second([$:, S1, S2| Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun offset_hour/2);
 second(_, _) ->
     error(badarg).
 
 second_no_colon([], Acc) ->
     datetime(Acc);
-second_no_colon([S1,S2,$.|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun second_decimal/2);
-second_no_colon([S1,S2,$,|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun second_decimal/2);
-second_no_colon([S1,S2|Rest], Acc) ->
-    acc([S1,S2], Rest, second, Acc, fun offset_hour/2);
+second_no_colon([S1, S2, $.| Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun second_decimal/2);
+second_no_colon([S1, S2, $, | Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun second_decimal/2);
+second_no_colon([S1, S2 | Rest], Acc) ->
+    acc([S1, S2], Rest, second, Acc, fun offset_hour/2);
 second_no_colon(_, _) ->
     error(badarg).
 
@@ -239,25 +240,29 @@ decimal(Str, Acc, Key) ->
                 false
         end,
     {Parts, Rest} = lists:splitwith(F, Str),
-    acc_float([$0,$.|Parts], Rest, Key, Acc, fun offset_hour/2).
+    acc_float([$0, $.|Parts], Rest, Key, Acc, fun offset_hour/2).
 
 offset_hour([], Acc) ->
     datetime(Acc);
 offset_hour([$Z], Acc) ->
     datetime(Acc);
-offset_hour([$+,H1,H2|Rest], Acc) ->
-    acc([H1,H2], Rest, offset_hour, Acc, fun offset_minute/2);
-offset_hour([$-,H1,H2|Rest], Acc) ->
-    acc([H1,H2], Rest, offset_hour, [{offset_sign, -1}|Acc], fun offset_minute/2);
+offset_hour([$+, H1, H2|Rest], Acc) ->
+    acc([H1, H2], Rest, offset_hour, Acc, fun offset_minute/2);
+offset_hour([$-, H1, H2|Rest], Acc) ->
+    acc([H1, H2],
+        Rest,
+        offset_hour,
+        [{offset_sign, -1} | Acc],
+        fun offset_minute/2);
 offset_hour(_, _) ->
     error(badarg).
 
 offset_minute([], Acc) ->
     datetime(Acc);
-offset_minute([$:,M1,M2], Acc) ->
-    acc([M1,M2], [], offset_minute, Acc, fun datetime/2);
-offset_minute([M1,M2], Acc) ->
-    acc([M1,M2], [], offset_minute, Acc, fun datetime/2);
+offset_minute([$:, M1, M2], Acc) ->
+    acc([M1, M2], [], offset_minute, Acc, fun datetime/2);
+offset_minute([M1, M2], Acc) ->
+    acc([M1, M2], [], offset_minute, Acc, fun datetime/2);
 offset_minute(_, _) ->
     error(badarg).
 
@@ -319,7 +324,7 @@ make_date(Year, _, Week, Plist) ->
 %% @doc Calculate the `calendar:date()' at ISO week 1, day 1 in the supplied
 %% year.
 date_at_w01_1(Year) ->
-    case calendar:day_of_the_week({Year,1,1}) of
+    case calendar:day_of_the_week({Year, 1, 1}) of
         1 -> {Year, 1, 1};
         2 -> {Year-1, 12, 31};
         3 -> {Year-1, 12, 30};
@@ -343,7 +348,7 @@ apply_offset(Datetime, H, M, S) ->
 apply_months_offset(Datetime, 0) ->
     Datetime;
 apply_months_offset(Datetime, AM) ->
-    {{Y,M,D},{H,MM,S}} = Datetime,
+    {{Y, M, D}, {H, MM, S}} = Datetime,
     AY = (Y*12)+M+AM,
     Year = (AY div 12),
     Month =
@@ -351,48 +356,48 @@ apply_months_offset(Datetime, AM) ->
             0 -> 12;
             _ -> AY rem 12
         end,
-    find_last_valid_date({{Year,Month,D},{H,MM,S}}).
+    find_last_valid_date({{Year, Month, D}, {H, MM, S}}).
 
 -spec apply_days_offset (datetime(), number()) -> datetime().
 %% @doc Add the specified days to `Datetime'.
 apply_days_offset(Datetime, AD) ->
-    {{Y,M,D},{H,MM,S}} = Datetime,
-    DaysTotal=calendar:date_to_gregorian_days({Y,M,D})+AD,
-    {calendar:gregorian_days_to_date(DaysTotal),{H,MM,S}}.
+    {{Y, M, D}, {H, MM, S}} = Datetime,
+    DaysTotal=calendar:date_to_gregorian_days({Y, M, D})+AD,
+    {calendar:gregorian_days_to_date(DaysTotal), {H, MM, S}}.
 
 -spec apply_years_offset (datetime(), number()) -> datetime().
 %% @doc Add the specified years to `Datetime'.
 apply_years_offset(Datetime, AY) ->
-    {{Y,M,D},{H,MM,S}}=Datetime,
-    {{Y+AY,M,D},{H,MM,S}}.
+    {{Y, M, D}, {H, MM, S}}=Datetime,
+    {{Y+AY, M, D}, {H, MM, S}}.
 
 -spec find_last_valid_date(datetime()) -> datetime().
 %% @doc Decrease days until found valid date'.
 find_last_valid_date(Datetime)->
-    {{Y,M,D},{H,MM,S}} = Datetime,
-    case calendar:valid_date({Y,M,D}) of
+    {{Y, M, D}, {H, MM, S}} = Datetime,
+    case calendar:valid_date({Y, M, D}) of
        true ->Datetime;
-       false ->find_last_valid_date({{Y,M,D-1},{H,MM,S}})
+       false ->find_last_valid_date({{Y, M, D-1}, {H, MM, S}})
     end.
 
--spec apply_duration(datetime(),string()) -> datetime().
+-spec apply_duration(datetime(), string()) -> datetime().
 %% @doc Return new datetime after apply duration.
-apply_duration(Datetime,Duration) ->
-      [{sign,_S},{years,Y},{months,M},{days,D},{hours,H},
-       {minutes,MM},{seconds,SS}] = parse_duration(Duration),
-       D1=apply_years_offset(Datetime,Y),
-       D2=apply_months_offset(D1,M),
-       D3=apply_days_offset(D2,D),
+apply_duration(Datetime, Duration) ->
+      [{sign, _S}, {years, Y}, {months, M}, {days, D}, {hours, H},
+       {minutes, MM}, {seconds, SS}] = parse_duration(Duration),
+       D1=apply_years_offset(Datetime, Y),
+       D2=apply_months_offset(D1, M),
+       D3=apply_days_offset(D2, D),
        apply_offset(D3, H, MM, SS).
 
--spec apply_durations(datetime(),string(),list(),integer()) -> list().
+-spec apply_durations(datetime(), string(), list(), integer()) -> list().
 %% @doc Return new list with datetime tuples.
-apply_durations(_Datetime,_Duration,DatetimeList,0)->
+apply_durations(_Datetime, _Duration, DatetimeList, 0)->
                 DatetimeList;
-apply_durations(Datetime,Duration,DatetimeList,Count)->
-       NewDate=apply_duration(Datetime,Duration),
+apply_durations(Datetime, Duration, DatetimeList, Count)->
+       NewDate=apply_duration(Datetime, Duration),
        NewList=lists:append(DatetimeList, [NewDate]),
-       apply_durations(NewDate,Duration,NewList,Count-1).
+       apply_durations(NewDate, Duration, NewList, Count-1).
 
 -spec is_datetime(string()) -> atom().
 %% @doc Return true atom if datetime is valid.
@@ -422,43 +427,51 @@ parse_interval(Bin) when is_binary(Bin) ->
     parse_interval(binary_to_list(Bin));
 parse_interval(TimeInterval)->%"R2/P1Y3M22DT3H/2014-01-01T16:46:45Z"
     Tokens  = string:tokens(TimeInterval, "/"),
-    [R,S,E]=case string:substr(TimeInterval,1,1) of
+    [R, S, E]=case string:substr(TimeInterval, 1, 1) of
      "R"->
           [RS|StartEnd] = Tokens,
           [Start|Endd] = StartEnd,
-          Repeat=list_to_integer(string:substr(RS,2)),
+          Repeat=list_to_integer(string:substr(RS, 2)),
           End=binary_to_list(list_to_binary(Endd)),
           if
-           End==[]->[Repeat,binary_to_list(format(now())),Start];
-           true->[Repeat,Start,End]
+           End==[]->[Repeat, binary_to_list(format(now())), Start];
+           true->[Repeat, Start, End]
           end;
      "P"->[End|Startt] = Tokens,
            Start=binary_to_list(list_to_binary(Startt)),
           if
-           Start==[]->[1,binary_to_list(format(now())),End];
-           true->[1,Start,End]
+           Start==[]->[1, binary_to_list(format(now())), End];
+           true->[1, Start, End]
           end;
        _->[Start|Endd] = Tokens,
            End=binary_to_list(list_to_binary(Endd)),
            if
-           End==[]->[1,binary_to_list(format(now())),Start];
-           true->[1,Start,End]
+           End==[]->[1, binary_to_list(format(now())), Start];
+           true->[1, Start, End]
            end
           end,
-      [R,Datetime,Duration]=case is_datetime(S) of
-             true->  case is_datetime(E) of
-                     true->"Can't handle this yet (Date,Date)";
-                     false-> case is_duration(E) of
-                              true->[R,S,E];
-                              false-> error(badarg)
-                              end
-                     end;
-             false-> case is_duration(S) of
-                     true->  case is_datetime(E) of
-                             true-> [R,E,S];%"Duration Date";
-                             false-> error(badarg)
-                             end;
-                     false-> error(badarg)
-                     end
+      [R, Datetime, Duration] =
+          case is_datetime(S) of
+             true->  is_datetime_duration(R, E, S);
+             false-> is_duration_datetime(R, E, S)
           end,
-        apply_durations(parse(Datetime),Duration,[],R).
+        apply_durations(parse(Datetime), Duration, [], R).
+
+
+is_datetime_duration(R, E, S) ->
+  case is_datetime(E) of
+    true->"Can't handle this yet (Date, Date)";
+    false-> case is_duration(E) of
+              true->[R, S, E];
+              false-> error(badarg)
+            end
+  end.
+
+is_duration_datetime(R, E, S) ->
+  case is_duration(S) of
+    true->  case is_datetime(E) of
+              true-> [R, E, S]; %"Duration Date";
+              false-> error(badarg)
+            end;
+    false-> error(badarg)
+  end.
