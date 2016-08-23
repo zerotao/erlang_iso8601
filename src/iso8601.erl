@@ -32,7 +32,7 @@
 %% API
 
 -spec now () -> binary().
-%% @doc Wrapper for `iso8601:format(os:timestamp())`
+%% @doc Wrapper for `iso8601:format(os:timestamp())'
 now() ->
     format(os:timestamp()).
 
