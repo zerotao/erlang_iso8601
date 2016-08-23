@@ -432,21 +432,21 @@ parse_interval(TimeInterval)->%"R2/P1Y3M22DT3H/2014-01-01T16:46:45Z"
           [RS|StartEnd] = Tokens,
           [Start|Endd] = StartEnd,
           Repeat=list_to_integer(string:substr(RS, 2)),
-          End=binary_to_list(list_to_binary(Endd)),
+          [End]=Endd,
           if
-           End==[]->[Repeat, binary_to_list(format(now())), Start];
+           End==[]->[Repeat, binary_to_list(now()), Start];
            true->[Repeat, Start, End]
           end;
      "P"->[End|Startt] = Tokens,
-           Start=binary_to_list(list_to_binary(Startt)),
+           [Start]=Startt,
           if
-           Start==[]->[1, binary_to_list(format(now())), End];
+           Start==[]->[1, binary_to_list(now()), End];
            true->[1, Start, End]
           end;
        _->[Start|Endd] = Tokens,
-           End=binary_to_list(list_to_binary(Endd)),
+           [End]=Endd,
            if
-           End==[]->[1, binary_to_list(format(now())), Start];
+           End==[]->[1, binary_to_list(now()), Start];
            true->[1, Start, End]
            end
           end,
