@@ -142,21 +142,33 @@ parse_duration_fail_test_() ->
      [{"fails to parses misspelled string",
       ?_assertError(badarg, F("PIY"))}].
 
- parse_interval_test_() ->
+parse_interval_test_() ->
+     {{Y, M, D}, {H, _, _}} = calendar:universal_time(),
+     Y1 = Y+1,
+     M1 = M+1,
      F = fun iso8601:parse_interval/1,
      [{"parses date duration with repeat",
       ?_assertMatch([{{2009, 5, 11}, {15, 30, 0}},
-                      {{2010, 7, 21}, {18, 0, 0}},
-                      {{2011, 10, 1}, {20, 30, 0}},
-                      {{2013, 12, 11}, {23, 0, 0}},
-                      {{2015, 2, 22}, {1, 30, 0}}],
+                     {{2010, 7, 21}, {18, 0, 0}},
+                     {{2011, 10, 1}, {20, 30, 0}},
+                     {{2013, 12, 11}, {23, 0, 0}},
+                     {{2015, 2, 22}, {1, 30, 0}}],
                      F("R5/2008-03-01T13:00:00Z/P1Y2M10DT2H30M"))},
-      {"parses  duration date with repeat",
+      {"parses duration date with repeat",
       ?_assertMatch([{{2009, 5, 11}, {15, 30, 0}},
-                      {{2010, 7, 21}, {18, 0, 0}},
-                      {{2011, 10, 1}, {20, 30, 0}},
-                      {{2013, 12, 11}, {23, 0, 0}},
-                      {{2015, 2, 22}, {1, 30, 0}}],
-                     F("R5/P1Y2M10DT2H30M/2008-03-01T13:00:00Z"))}
+                     {{2010, 7, 21}, {18, 0, 0}},
+                     {{2011, 10, 1}, {20, 30, 0}},
+                     {{2013, 12, 11}, {23, 0, 0}},
+                     {{2015, 2, 22}, {1, 30, 0}}],
+                     F("R5/P1Y2M10DT2H30M/2008-03-01T13:00:00Z"))},
+      {"parses zero duration",
+      ?_assertMatch([{{Y, M, D}, {H, _, _}}],
+                     F("P0Y0M0DT0H0M"))},
+      {"parses duration year",
+      ?_assertMatch([{{Y1, M, D}, {H, _, _}}],
+                     F("P1Y0M0DT0H0M"))},
+      {"parses duration year month",
+      ?_assertMatch([{{Y1, M1, D}, {H, _, _}}],
+                     F("P1Y1M0DT0H0M"))}
                      ].
 %TODO test Repeat/duration
