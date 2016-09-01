@@ -3,3 +3,4 @@ ebin
 doc
 _build
 logs
+rebar3.crashdump

@@ -32,9 +32,8 @@
 %% API
 
 -spec now() -> binary().
-%% @doc Wrapper for `iso8601:format(os:timestamp())`
+%% @doc Wrapper for `iso8601:format(os:timestamp())'
 now() ->
-    % io:format("original fun ~n", []),
     format(os:timestamp()).
 
 -spec add_time (datetime() | timestamp(), integer(), integer(), integer()) ->

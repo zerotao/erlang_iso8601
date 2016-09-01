@@ -7,5 +7,8 @@
   {applications, [kernel, stdlib]},
   {env, []},
   {modules, []},
+  {maintainers, ["Inaka"]},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/inaka/erlang_iso8601"}]},
   {build_tools, ["rebar3"]}
  ]}.
