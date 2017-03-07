@@ -2,9 +2,13 @@
  [
   {description, "ISO 8601 date parser and formatter."},
   {vsn, "1.2.0"},
+  {pkg_name, inaka_iso8601},
   {registered, []},
   {applications, [kernel, stdlib]},
   {env, []},
   {modules, []},
+  {maintainers, ["Inaka"]},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/inaka/erlang_iso8601"}]},
   {build_tools, ["make", "rebar3"]}
  ]}.
