@@ -31,8 +31,8 @@
 
 %% API
 
--spec now () -> binary().
-%% @doc Wrapper for `iso8601:format(os:timestamp())'
+-spec now() -> binary().
+%% @doc Wrapper for `iso8601:format(os:timestamp())`
 now() ->
     format(os:timestamp()).
 
@@ -456,6 +456,7 @@ parse_interval(TimeInterval)->%"R2/P1Y3M22DT3H/2014-01-01T16:46:45Z"
              false-> is_duration_datetime(R, E, S)
           end,
         apply_durations(parse(Datetime), Duration, [], R).
+
 
 is_datetime_duration(R, E, S) ->
   case is_datetime(E) of
